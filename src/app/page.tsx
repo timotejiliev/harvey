@@ -33,16 +33,18 @@ function Shell() {
   const onboarding = !data.profile.masterCv.trim() || (!data.settings.apiKey && data.settings.provider !== "openai-compatible");
 
   return (
-    <div className="shell">
-      <aside className="side">
-        <div className="brand">Harvey</div>
-        <nav className="nav">
-          {nav.map(([n, l]) => (
-            <button key={n} className={view.name === n || (n === "pipeline" && view.name === "job") ? "on" : ""} onClick={() => setView({ name: n } as View)}>{l}</button>
-          ))}
-        </nav>
-      </aside>
-      <main className="main">
+    <>
+      <header className="topbar">
+        <div className="topbar-in">
+          <div className="brand"><i />Harvey</div>
+          <nav className="nav">
+            {nav.map(([n, l]) => (
+              <button key={n} className={view.name === n || (n === "pipeline" && view.name === "job") ? "on" : ""} onClick={() => setView({ name: n } as View)}>{l}</button>
+            ))}
+          </nav>
+        </div>
+      </header>
+      <main className="main" key={view.name + (view.name === "job" ? view.id : "")}>
         {onboarding && view.name === "pipeline" && (
           <div className="banner"><b>Get started:</b> 1) add your AI key in <a href="#" onClick={(e) => { e.preventDefault(); setView({ name: "settings" }); }}>Settings</a>, 2) paste your CV in <a href="#" onClick={(e) => { e.preventDefault(); setView({ name: "profile" }); }}>Profile</a>, 3) add a job.</div>
         )}
@@ -53,7 +55,7 @@ function Shell() {
         {view.name === "library" && <Library />}
         {view.name === "settings" && <SettingsView />}
       </main>
-    </div>
+    </>
   );
 }
 

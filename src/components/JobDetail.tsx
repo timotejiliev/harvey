@@ -77,15 +77,15 @@ export default function JobDetail({ id, back }: { id: string; back: () => void }
 
   return (
     <>
-      <button className="btn ghost" onClick={back}>← Pipeline</button>
-      <div className="row" style={{ justifyContent: "space-between", marginTop: 12 }}>
+      <button className="btn ghost back" onClick={back}>← Pipeline</button>
+      <div className="page-head">
         <div>
           <h1>{job.title || "Untitled role"}</h1>
           <p className="sub">{job.company}{job.location ? ` · ${job.location}` : ""} {job.url && <a href={job.url} target="_blank" rel="noreferrer">posting ↗</a>}</p>
         </div>
         <div className="row">
           <Score value={job.evaluation?.score} />
-          <select value={job.status} onChange={(e) => setStatus(e.target.value as Status)} style={{ width: 170 }}>{STATUSES.map((s) => <option key={s}>{s}</option>)}</select>
+          <select value={job.status} onChange={(e) => setStatus(e.target.value as Status)} style={{ width: 180, borderRadius: 999 }}>{STATUSES.map((s) => <option key={s}>{s}</option>)}</select>
         </div>
       </div>
       {needProfile && <div className="banner">Add your master CV in <b>Profile</b> first. Everything is built from it.</div>}
@@ -145,12 +145,12 @@ function EvalView({ ev, min }: { ev: Evaluation; min: number }) {
   return (
     <>
       <div className="card">
-        <div className="row"><span className={`score ${scoreClass(ev.score)}`} style={{ fontSize: 28 }}>{ev.score.toFixed(1)}</span><span className="pill">{rec === "apply" ? "Worth applying" : rec === "consider" ? "Consider carefully" : "Skip"}</span>
+        <div className="row"><span className={`score big-score ${scoreClass(ev.score)}`}>{ev.score.toFixed(1)}</span><span className="pill">{rec === "apply" ? "Worth applying" : rec === "consider" ? "Consider carefully" : "Skip"}</span>
           {ev.score < min && <span className="muted small">below your {min.toFixed(1)} threshold (you can still apply)</span>}</div>
         <p>{ev.summary}</p>
         {ev.dealBreakerHits.length > 0 && <div className="err"><b>Deal-breakers hit:</b> {ev.dealBreakerHits.join("; ")}</div>}
       </div>
-      <div className="card"><table><tbody>{ev.dimensions.map((d) => <tr key={d.name}><td style={{ width: 170 }}><b>{d.name}</b></td><td style={{ width: 60 }}><span className={`score ${scoreClass(d.score)}`}>{d.score.toFixed(1)}</span></td><td>{d.rationale}</td></tr>)}</tbody></table></div>
+      <div className="card"><table><tbody>{ev.dimensions.map((d) => <tr key={d.name}><td style={{ width: 190 }}><b>{d.name}</b></td><td style={{ width: 60 }}><span className={`score ${scoreClass(d.score)}`}>{d.score.toFixed(1)}</span></td><td>{d.rationale}</td></tr>)}</tbody></table></div>
       <div className="grid2">
         <div className="card"><h3>Strengths</h3><ul>{ev.strengths.map((s, i) => <li key={i}>{s}</li>)}</ul></div>
         <div className="card"><h3>Gaps</h3><ul>{ev.gaps.map((s, i) => <li key={i}>{s}</li>)}</ul></div>

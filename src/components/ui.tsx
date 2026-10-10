@@ -38,6 +38,6 @@ export function scoreClass(s: number) {
 }
 
 export function Score({ value }: { value?: number }) {
-  if (value == null) return <span className="muted small">not scored</span>;
-  return <span className={`score ${scoreClass(value)}`}>{value.toFixed(1)}/5</span>;
+  if (value == null) return <span className="score-chip none">Not scored</span>;
+  return <span className={`score-chip ${scoreClass(value)}`}>{value.toFixed(1)}</span>;
 }
