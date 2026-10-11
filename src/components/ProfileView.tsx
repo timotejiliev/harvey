@@ -3,7 +3,6 @@ import { useState, type ReactNode } from "react";
 import { useStore, uid } from "@/lib/store";
 import { fmtRange } from "@/lib/profile";
 import { profileHtml } from "@/lib/profile-html";
-import { Glyph } from "./Mark";
 import type { Achievement, Education, Experience, Profile, Project } from "@/lib/types";
 
 const COVERS = 5;
@@ -72,7 +71,6 @@ export default function ProfileView({ talk }: { talk: () => void }) {
 
       <div className="bezel"><div className="inner">
         <div className={`pf-cover cv-${p.cover % COVERS}`}>
-          <span className="pf-cover-mark"><Glyph size={64} /></span>
           {editable && <button className="pf-cover-btn" onClick={() => set({ cover: (p.cover + 1) % COVERS })}>Change cover</button>}
         </div>
         <div className="pf-ident">

@@ -1,31 +1,42 @@
 # Donna's voice
 
-Donna speaks in three tiers. Pick one in **Settings > Donna's voice**.
+Donna speaks in fixed lines (`src/lib/lines.json`). Every line is rendered once to an mp3 with an open-source voice model and shipped with the app in `public/voice/<voice>/`. Playing a recording costs nothing, needs no model download in the browser and works on free hosting.
 
-| Tier | Cost | Quality | Needs |
+| Mode | Cost | Quality | Needs |
 |---|---|---|---|
-| Built in | Free | Depends on the device (Chrome/Edge/Safari voices) | Nothing |
-| Premium | Pay per use | Natural, steerable | An OpenAI key |
-| Custom | Free | Whatever you design | Your own voice server, or pre-rendered clips |
+| Natural (default) | Free | Natural, consistent | Nothing |
+| Built in | Free | Robotic, device dependent | Nothing |
+| Premium | Pay per use | Natural, steerable | The user's OpenAI key |
+| Custom | Free | Whatever you run | An OpenAI-compatible voice server |
 
-## Pre-rendered clips (free hosting, signature voice)
+## Where the natural voice comes from
 
-Donna plays `public/voice/<id>.mp3` before trying any live voice. List the ids you have in `public/voice/manifest.json`, for example `["welcome","ask-name"]`. Every scripted line and its id lives in `src/lib/donna.ts` (`LINES`). Lines that include a person's name or numbers are always synthesised live.
+[Kokoro](https://huggingface.co/hexgrad/Kokoro-82M) v1.0 (82M parameters, Apache-2.0, so commercial use is allowed), run through the [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) runtime. Voices shipped: Heart, Bella, Nicole (American) and Emma (British). Users pick one in Settings.
 
-Workflow: design the voice once in a local tool, render each scripted line, drop the mp3 files in `public/voice`, redeploy.
+## Changing or adding lines
 
-## Designing the voice
+Edit `src/lib/lines.json`, then re-render:
 
-Local tools that can do this: [VoiceStudio](https://github.com/debpalash/VoiceStudio) (AGPL-3.0, voice design from a text description) and [voicebox](https://github.com/jamiepine/voicebox) (MIT, REST API on `127.0.0.1:17493`). Both run on your own machine and want a GPU or Apple Silicon for good speed. They cannot run on free Vercel hosting. Check each tool's own terms before using generated audio commercially.
+```bash
+npm i --no-save sherpa-onnx-node
+# download and extract kokoro-multi-lang-v1_0.tar.bz2 from
+# https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models  (350 MB, one time)
+KOKORO_DIR=/path/to/kokoro-multi-lang-v1_0 node scripts/render-voice.mjs          # all voices
+KOKORO_DIR=/path/to/kokoro-multi-lang-v1_0 node scripts/render-voice.mjs af_heart # one voice
+```
 
-A voice brief to paste into a "voice design" prompt (an original character, not a real person):
+Requires `ffmpeg` on the path. Commit the changed files in `public/voice`. To add a voice, add its id and speaker id to `SPEAKERS` in the script (ids are listed in the model's metadata) and to `src/lib/voices.ts`.
 
-> A woman in her late thirties. Warm, low and smooth, with a slight husk. Unhurried. Completely sure of herself, with dry amusement under the surface. Lands the end of each sentence. Never perky, never robotic.
+Rule: spoken text is never built at runtime. Names, counts and other personal details appear on screen only, so every spoken line can be a recording.
+
+## Free-form speech later
+
+If Donna ever needs to say arbitrary text (for example reading back a drafted answer), run Kokoro in the browser with [kokoro-js](https://github.com/hexgrad/kokoro/tree/main/kokoro.js) (WebGPU or WASM, about 90 MB cached after the first download). That is not wired in yet.
 
 ## Do not clone a real person
 
-Do not use a clone of an actress or any other real person's voice, or her recognisable lines, in a product you plan to sell. That raises right-of-publicity and impersonation problems. Design an original voice from a description, or clone a voice you have written permission to use.
+Do not use a clone of an actress or any other real person's voice, or her recognisable lines, in a product you plan to sell. That raises right-of-publicity and impersonation problems. Use the open voices above, design an original one, or clone only a voice you have written permission to use.
 
 ## Custom server
 
-`Custom` calls `POST {url}/v1/audio/speech` with `{model, voice, input, response_format: "mp3"}` straight from the browser, so the server must be OpenAI-compatible and allow CORS from your site. If your tool uses a different API, put a small adapter in front of it. I have not tested this against VoiceStudio or voicebox.
+`Custom` calls `POST {url}/v1/audio/speech` with `{model, voice, input, response_format: "mp3"}` straight from the browser, so the server must be OpenAI-compatible and allow CORS from your site. Not tested against VoiceStudio or voicebox.

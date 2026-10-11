@@ -11,7 +11,6 @@ import Onboarding from "@/components/Onboarding";
 import { hasProfileData } from "@/lib/profile";
 import { pipelineLine } from "@/lib/donna";
 import { speak } from "@/lib/voice";
-import { Glyph } from "@/components/Mark";
 
 const svg = (d: ReactNode) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>{d}</svg>;
 const ICON: Record<string, ReactNode> = {
@@ -63,7 +62,7 @@ function Shell() {
       <div className="desk">
         <div className="window">
           <aside className="side">
-            <div className="brand"><span className="brand-mark"><Glyph size={20} /></span>Donna</div>
+            <div className="brand">Donna</div>
             <nav className="nav">
               {nav.map(([n, l]) => (
                 <button key={n} className={view.name === n || (n === "pipeline" && view.name === "job") ? "on" : ""} onClick={() => setView({ name: n } as View)}>
@@ -74,8 +73,8 @@ function Shell() {
             </nav>
             <div className="says">
               <span className="eyebrow">Donna says</span>
-              <p>{line}</p>
-              {data.settings.voice.mode !== "off" && <button onClick={() => speak(data.settings, line)}>Hear it</button>}
+              <p>{line.text}</p>
+              {data.settings.voice.mode !== "off" && <button onClick={() => speak(data.settings, line.text, { id: line.id })}>Hear it</button>}
             </div>
           </aside>
       <main className="pane" key={view.name + (view.name === "job" ? view.id : "")}>

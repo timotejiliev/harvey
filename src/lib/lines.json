@@ -1,0 +1,22 @@
+{
+  "welcome": "Hello. I'm Donna. From here on, your job search is my problem, and you're going to look very good doing it.",
+  "ask-name": "First things first. What should I call you?",
+  "greet": "Lovely to meet you. Let's get you set up.",
+  "brain": "I think best with a serious brain behind me. Pick your provider and paste a key. It stays in this browser, and nobody else sees it.",
+  "brain-skip": "No key yet? That's fine. We'll do this the slow way, and you can add one whenever you like.",
+  "materials": "Now show me who you are. Drop in your CV, your LinkedIn profile saved as a PDF, or the link to your website. Anything you've got.",
+  "reading": "Give me a moment. I'm reading everything, including the parts you forgot to mention.",
+  "review": "Here's what I found. Have a look, and tell me if I missed anything.",
+  "review-gaps": "Here's what I found. A few things are thin, and we'll fix those in your profile.",
+  "looks-right": "Good. I'll polish the details in your profile.",
+  "add-more": "Add whatever's missing, and I'll read it again.",
+  "manual": "Fine. We'll build your profile by hand, and I'll remind you about it later.",
+  "targets": "Last question. What are we aiming at, and what's absolutely off the table?",
+  "done": "That's everything I need. Now, let's go find you something worth getting out of bed for.",
+  "error": "That didn't work. It happens. Check the details, and we'll try again.",
+  "soundcheck": "Hello. I'm Donna. This is how I sound.",
+  "pipe-empty": "Nothing in the pipeline yet. Give me a posting, and I'll tell you if it's worth your time.",
+  "pipe-due": "You have follow-ups due. Politely persistent beats forgotten.",
+  "pipe-ready": "You have applications drafted and waiting for your approval.",
+  "pipe-quiet": "Quiet day. Good time to add something ambitious."
+}

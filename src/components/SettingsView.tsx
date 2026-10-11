@@ -5,6 +5,8 @@ import { MODEL_SUGGESTIONS } from "@/lib/defaults";
 import { TEMPLATES } from "@/lib/templates";
 import { ask } from "@/lib/client-ai";
 import { listBrowserVoices, primeVoice, speak } from "@/lib/voice";
+import { L } from "@/lib/donna";
+import { NATURAL_VOICES } from "@/lib/voices";
 import type { AppData, ExportFormat, Provider, TemplateId, VoiceSettings } from "@/lib/types";
 import { Row, useAction } from "./ui";
 
@@ -29,7 +31,7 @@ export default function SettingsView() {
   const hello = () => {
     primeVoice();
     setVoiceMsg("");
-    speak(s, "Hello. I'm Donna. This is how I sound.", { onWarn: setVoiceMsg });
+    speak(s, L("soundcheck").text, { id: "soundcheck", onWarn: setVoiceMsg });
   };
   const backup = () => {
     const safe: AppData = { ...data, settings: { ...data.settings, apiKey: "", voice: { ...data.settings.voice, openaiKey: "" } } };
@@ -81,12 +83,20 @@ export default function SettingsView() {
       <div className="frows">
         <Row label="Voice" hint="How Donna speaks.">
           <select value={v.mode} onChange={(e) => setVoice({ mode: e.target.value as VoiceSettings["mode"] })}>
-            <option value="browser">Built in (free, depends on your device)</option>
+            <option value="natural">Natural (free, recommended)</option>
+            <option value="browser">Built in to your browser (free, robotic)</option>
             <option value="openai">Premium (OpenAI voice, uses your key)</option>
             <option value="custom">Custom (your own voice server)</option>
             <option value="off">Off (text only)</option>
           </select>
         </Row>
+        {v.mode === "natural" && (
+          <Row label="Natural voice" hint="Open-source voices, recorded with the app. No download.">
+            <select value={v.naturalVoice} onChange={(e) => { setVoice({ naturalVoice: e.target.value }); }}>
+              {NATURAL_VOICES.map((x) => <option key={x.id} value={x.id}>{x.label}: {x.note}</option>)}
+            </select>
+          </Row>
+        )}
         {v.mode === "browser" && (
           <Row label="Built-in voice">
             <select value={v.browserVoice} onChange={(e) => setVoice({ browserVoice: e.target.value })}>

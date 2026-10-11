@@ -1,7 +1,8 @@
 import type { AppData, Profile, VoiceSettings } from "./types";
 
 export const defaultVoice: VoiceSettings = {
-  mode: "browser",
+  mode: "natural",
+  naturalVoice: "af_heart",
   browserVoice: "",
   openaiKey: "",
   openaiVoice: "coral",

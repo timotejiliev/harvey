@@ -2,13 +2,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import { ask, askJson } from "@/lib/client-ai";
-import { greetName, LINES, reviewLine, type Line } from "@/lib/donna";
+import { L, type Line } from "@/lib/donna";
 import { mergeParsed, normalizeParsed, profileGaps } from "@/lib/profile";
 import { parseCvPrompt } from "@/lib/prompts";
 import { canListen, listen, primeVoice, speak, stopSpeaking } from "@/lib/voice";
 import { MODEL_SUGGESTIONS } from "@/lib/defaults";
 import type { Provider, Settings } from "@/lib/types";
-import Presence from "./Mark";
 
 type Step = "welcome" | "name" | "brain" | "materials" | "reading" | "review" | "targets" | "done";
 interface Doc { name: string; text: string }
@@ -72,7 +71,7 @@ export default function Onboarding({ close }: { close: (to?: "profile" | "add" |
   const begin = async () => {
     primeVoice(); // must run inside the click so the browser allows sound
     setStep("name");
-    if (await say(LINES.welcome)) say(LINES.askName);
+    if (await say(L("welcome"))) say(L("ask-name"));
   };
 
   const submitName = async () => {
@@ -80,7 +79,7 @@ export default function Onboarding({ close }: { close: (to?: "profile" | "add" |
     if (!n) return;
     update((d) => ({ ...d, profile: { ...d.profile, name: n } }));
     setStep("brain");
-    if (await say(greetName(n))) say(LINES.brain);
+    if (await say(L("greet"))) say(L("brain"));
   };
 
   const submitBrain = async () => {
@@ -90,7 +89,7 @@ export default function Onboarding({ close }: { close: (to?: "profile" | "add" |
       await ask(cand, { system: "Reply with the single word: ok", prompt: "ping", maxTokens: 10 });
       update((d) => ({ ...d, settings: { ...d.settings, provider, model, apiKey, baseUrl } }));
       setStep("materials");
-      say(LINES.materials);
+      say(L("materials"));
     } catch (e) {
       setError(e instanceof Error ? e.message : "That key did not work.");
     } finally { setBusy(false); }
@@ -98,7 +97,7 @@ export default function Onboarding({ close }: { close: (to?: "profile" | "add" |
 
   const skipBrain = async () => {
     setStep("targets");
-    if (await say(LINES.brainSkip)) say(LINES.targets);
+    if (await say(L("brain-skip"))) say(L("targets"));
   };
 
   const addFiles = async (files: FileList | File[]) => {
@@ -119,7 +118,7 @@ export default function Onboarding({ close }: { close: (to?: "profile" | "add" |
 
   const readIt = async () => {
     setStep("reading"); setError(""); setProgress(["Reading your documents"]);
-    say(LINES.reading);
+    say(L("reading"));
     try {
       const pieces = docs.map((d) => `--- ${d.name} ---\n${d.text}`);
       if (pasted.trim()) pieces.push(`--- pasted text ---\n${pasted.trim()}`);
@@ -138,18 +137,18 @@ export default function Onboarding({ close }: { close: (to?: "profile" | "add" |
       update((d) => ({ ...d, profile: merged }));
       setRoles((r) => r || merged.headline);
       setStep("review");
-      say(reviewLine({ roles: merged.experience.length, wins: merged.achievements.length, skills: merged.skills.length }, profileGaps(merged)));
+      say(profileGaps(merged).length ? L("review-gaps") : L("review"));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong while reading.");
       setStep("materials");
-      say(LINES.error);
+      say(L("error"));
     }
   };
 
   const finishTargets = async () => {
     update((d) => ({ ...d, profile: { ...d.profile, targetRoles: roles, dealBreakers: breakers, onboarded: true } }));
     setStep("done");
-    say(LINES.done);
+    say(L("done"));
   };
 
   const skipAll = () => {
@@ -175,7 +174,7 @@ export default function Onboarding({ close }: { close: (to?: "profile" | "add" |
       </div>
 
       <div className="ob-stage">
-        <Presence state={orb} size={step === "welcome" ? 76 : 52} />
+        <p className={`ob-status ${orb}`}><i />{orb === "speaking" ? "Donna is speaking" : orb === "thinking" ? "Donna is reading" : "Donna is listening"}</p>
         {step === "welcome" ? (
           <>
             <h1 className="ob-hello">Hello.</h1>
@@ -238,7 +237,7 @@ export default function Onboarding({ close }: { close: (to?: "profile" | "add" |
                 {error && <div className="err">{error}</div>}
                 <div className="row" style={{ marginTop: 14 }}>
                   <button className="btn" disabled={!canRead} onClick={readIt}>Read it</button>
-                  <button className="ob-link" onClick={async () => { setStep("targets"); if (await say({ id: "", text: "Fine. We'll build your profile by hand, and I'll nag you about it later." })) say(LINES.targets); }}>Skip, I&apos;ll type it in</button>
+                  <button className="ob-link" onClick={async () => { setStep("targets"); if (await say(L("manual"))) say(L("targets")); }}>Skip, I&apos;ll type it in</button>
                 </div>
               </div>
             )}
@@ -263,8 +262,8 @@ export default function Onboarding({ close }: { close: (to?: "profile" | "add" |
                 </div>
                 <ul className="mini">{p.experience.slice(0, 4).map((e) => <li key={e.id}><b>{e.title || "Role"}</b> at {e.company}</li>)}</ul>
                 <div className="row" style={{ marginTop: 16 }}>
-                  <button className="btn" onClick={async () => { setStep("targets"); if (await say({ id: "", text: "Good. I'll polish the details in your profile." })) say(LINES.targets); }}>Looks right</button>
-                  <button className="ob-link" onClick={() => { setStep("materials"); say({ id: "", text: "Add whatever's missing and I'll read it again." }); }}>Add more material</button>
+                  <button className="btn" onClick={async () => { setStep("targets"); if (await say(L("looks-right"))) say(L("targets")); }}>Looks right</button>
+                  <button className="ob-link" onClick={() => { setStep("materials"); say(L("add-more")); }}>Add more material</button>
                 </div>
               </div>
             )}

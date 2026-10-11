@@ -14,10 +14,11 @@ export const STATUSES = [
 ] as const;
 export type Status = (typeof STATUSES)[number];
 
-export type VoiceMode = "off" | "browser" | "openai" | "custom";
+export type VoiceMode = "off" | "natural" | "browser" | "openai" | "custom";
 
 export interface VoiceSettings {
   mode: VoiceMode;
+  naturalVoice: string; // id of a pre-rendered open-source voice
   browserVoice: string; // voiceURI, "" = auto-pick
   openaiKey: string; // falls back to the main key when the provider is OpenAI
   openaiVoice: string;

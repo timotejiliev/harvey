@@ -1,13 +1,15 @@
 "use client";
 import { DONNA_VOICE_INSTRUCTIONS } from "./donna";
+import { DEFAULT_NATURAL } from "./voices";
 import type { Settings } from "./types";
 
 /**
- * One speak() entry point. Order of preference:
- *  1. a pre-rendered clip at /voice/<id>.mp3 (listed in /voice/manifest.json)
- *  2. the selected live provider: OpenAI TTS, a custom OpenAI-compatible server, or the browser
- *  3. the browser voice as a fallback
- * Callers never need to know which one played.
+ * One speak() entry point. Modes:
+ *  natural  plays pre-rendered clips of an open-source voice (Kokoro), shipped in /voice/<voice>/. Free, no model download.
+ *  browser  the device's built-in voice
+ *  openai   OpenAI text-to-speech with the user's key
+ *  custom   any OpenAI-compatible speech server
+ * Every spoken line is fixed text with an id, so natural mode never needs live synthesis.
  */
 
 export interface SpeakOpts {
@@ -17,7 +19,7 @@ export interface SpeakOpts {
 }
 
 let stopCurrent: (() => void) | null = null;
-let manifest: Promise<string[]> | null = null;
+const manifests = new Map<string, Promise<string[]>>();
 
 export function stopSpeaking() {
   stopCurrent?.();
@@ -25,11 +27,17 @@ export function stopSpeaking() {
   if (typeof speechSynthesis !== "undefined") speechSynthesis.cancel();
 }
 
-const clips = () =>
-  (manifest ??= fetch("/voice/manifest.json")
-    .then((r) => (r.ok ? r.json() : []))
-    .then((j) => (Array.isArray(j) ? j.filter((x) => typeof x === "string") : []))
-    .catch(() => []));
+const clipIds = (voice: string): Promise<string[]> => {
+  let m = manifests.get(voice);
+  if (!m) {
+    m = fetch(`/voice/${encodeURIComponent(voice)}/manifest.json`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((j) => (Array.isArray(j) ? j.filter((x) => typeof x === "string") : []))
+      .catch(() => []);
+    manifests.set(voice, m);
+  }
+  return m;
+};
 
 // One shared element, unlocked by a click, so audio that starts after a network
 // round trip is still allowed to play (Safari and iOS are strict about this).
@@ -140,8 +148,13 @@ export async function speak(settings: Settings, text: string, opts: SpeakOpts = 
   if (v.mode === "off" || !text.trim()) return;
   stopSpeaking();
   try {
-    if (opts.id && (await clips()).includes(opts.id)) {
-      await playUrl(`/voice/${opts.id}.mp3`, opts.onStart);
+    if (v.mode === "natural") {
+      const voice = v.naturalVoice || DEFAULT_NATURAL;
+      if (opts.id && (await clipIds(voice)).includes(opts.id)) {
+        await playUrl(`/voice/${encodeURIComponent(voice)}/${opts.id}.mp3`, opts.onStart);
+        return;
+      }
+      await speakBrowser(text, v.browserVoice, opts.onStart, opts.onWarn); // a line with no recording
       return;
     }
     if (v.mode === "openai") {
