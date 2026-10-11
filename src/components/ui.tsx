@@ -41,3 +41,13 @@ export function Score({ value }: { value?: number }) {
   if (value == null) return <span className="score-chip none">Not scored</span>;
   return <span className={`score-chip ${scoreClass(value)}`}>{value.toFixed(1)}</span>;
 }
+
+/** Label on the left, control on the right, dotted rule between rows. */
+export function Row({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+  return (
+    <div className="frow">
+      <div className="frow-l"><b>{label}</b>{hint && <span>{hint}</span>}</div>
+      <div className="frow-r">{children}</div>
+    </div>
+  );
+}

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { STATUSES, type Job } from "@/lib/types";
-import { greeting, pipelineLine } from "@/lib/donna";
+import { greeting } from "@/lib/donna";
 import { Score } from "./ui";
 
 export default function Pipeline({ open, goAdd }: { open: (id: string) => void; goAdd: () => void }) {
@@ -22,7 +22,7 @@ export default function Pipeline({ open, goAdd }: { open: (id: string) => void; 
       <div className="page-head">
         <div>
           <h1>{greeting(data.profile.name)}</h1>
-          <p className="sub donna-line">{pipelineLine({ jobs: jobs.length, due: due.length, ready: jobs.filter((j) => j.status === "Ready to apply").length })}</p>
+          <p className="sub">Everything you are chasing, in one place.</p>
         </div>
         <div className="row">
           <button className="btn ghost" onClick={() => setView(view === "board" ? "table" : "board")}>{view === "board" ? "Table view" : "Board view"}</button>

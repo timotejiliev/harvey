@@ -31,6 +31,8 @@ export const emptyProfile: Profile = {
   notes: "",
   masterCv: "",
   handle: "",
+  photo: "",
+  cover: 0,
   onboarded: false,
 };
 

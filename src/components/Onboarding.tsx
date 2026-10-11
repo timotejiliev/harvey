@@ -5,15 +5,15 @@ import { ask, askJson } from "@/lib/client-ai";
 import { greetName, LINES, reviewLine, type Line } from "@/lib/donna";
 import { mergeParsed, normalizeParsed, profileGaps } from "@/lib/profile";
 import { parseCvPrompt } from "@/lib/prompts";
-import { canListen, listen, speak, stopSpeaking } from "@/lib/voice";
+import { canListen, listen, primeVoice, speak, stopSpeaking } from "@/lib/voice";
 import { MODEL_SUGGESTIONS } from "@/lib/defaults";
 import type { Provider, Settings } from "@/lib/types";
-import Orb from "./Orb";
+import Presence from "./Mark";
 
 type Step = "welcome" | "name" | "brain" | "materials" | "reading" | "review" | "targets" | "done";
 interface Doc { name: string; text: string }
 
-export default function Onboarding({ close }: { close: (to?: "profile" | "add") => void }) {
+export default function Onboarding({ close }: { close: (to?: "profile" | "add" | "settings") => void }) {
   const { data, update } = useStore();
   const [step, setStep] = useState<Step>("welcome");
   const [caption, setCaption] = useState("");
@@ -22,6 +22,7 @@ export default function Onboarding({ close }: { close: (to?: "profile" | "add") 
   const [warn, setWarn] = useState("");
   const [busy, setBusy] = useState(false);
   const seq = useRef(0);
+  const last = useRef<Line | null>(null);
   const settings = useRef<Settings>(data.settings);
   settings.current = data.settings;
 
@@ -43,6 +44,8 @@ export default function Onboarding({ close }: { close: (to?: "profile" | "add") 
   /** Say a line. Resolves true if it finished, false if something newer interrupted it. */
   const say = useCallback((line: Line): Promise<boolean> => {
     const n = ++seq.current;
+    last.current = line;
+    setWarn("");
     setCaption(line.text);
     setSpeaking(false);
     const off = settings.current.voice.mode === "off";
@@ -64,7 +67,10 @@ export default function Onboarding({ close }: { close: (to?: "profile" | "add") 
     update((d) => ({ ...d, settings: { ...d.settings, voice: { ...d.settings.voice, mode } } }));
   };
 
+  const replay = () => { primeVoice(); if (last.current) say(last.current); };
+
   const begin = async () => {
+    primeVoice(); // must run inside the click so the browser allows sound
     setStep("name");
     if (await say(LINES.welcome)) say(LINES.askName);
   };
@@ -161,7 +167,7 @@ export default function Onboarding({ close }: { close: (to?: "profile" | "add") 
   return (
     <div className="ob" role="dialog" aria-label="Meet Donna">
       <div className="ob-top">
-        <span className="ob-mark">Donna</span>
+        <span className="ob-mark eyebrow">Donna</span>
         <div className="row" style={{ gap: 6 }}>
           <button className="ob-link" onClick={toggleSound}>{data.settings.voice.mode === "off" ? "Sound off" : "Sound on"}</button>
           {step !== "done" && <button className="ob-link" onClick={skipAll}>Skip for now</button>}
@@ -169,18 +175,21 @@ export default function Onboarding({ close }: { close: (to?: "profile" | "add") 
       </div>
 
       <div className="ob-stage">
-        <Orb state={orb} size={step === "welcome" ? 260 : 170} />
+        <Presence state={orb} size={step === "welcome" ? 76 : 52} />
         {step === "welcome" ? (
           <>
             <h1 className="ob-hello">Hello.</h1>
             <p className="ob-sub">I&apos;m Donna, and I&apos;m about to make your job search considerably less painful.</p>
             <button className="btn big" onClick={begin}>Begin</button>
-            <p className="ob-fine">Turn your sound on. She talks.</p>
+            <p className="ob-fine">TURN YOUR SOUND ON. SHE TALKS.</p>
           </>
         ) : (
           <>
             <Caption text={caption} />
-            {warn && <p className="ob-fine">{warn}</p>}
+            <div className="ob-tools">
+              <button className="ob-link" onClick={replay}>Replay</button>
+              {warn && <><span className="ob-warn">{warn}</span><button className="ob-link" onClick={() => { stopSpeaking(); close("settings"); }}>Voice settings</button></>}
+            </div>
             {idx >= 0 && <div className="ob-dots">{order.map((s, i) => <i key={s} className={i <= idx ? "on" : ""} />)}</div>}
 
             {step === "name" && (

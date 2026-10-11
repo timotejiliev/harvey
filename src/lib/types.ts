@@ -102,6 +102,8 @@ export interface Profile {
   // raw text imported during onboarding, kept so nothing is lost
   masterCv: string;
   handle: string; // reserved for the shareable page
+  photo: string; // small data URL, resized in the browser
+  cover: number; // index of a cover style
   onboarded: boolean;
 }
 

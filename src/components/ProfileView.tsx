@@ -3,8 +3,10 @@ import { useState, type ReactNode } from "react";
 import { useStore, uid } from "@/lib/store";
 import { fmtRange } from "@/lib/profile";
 import { profileHtml } from "@/lib/profile-html";
+import { Glyph } from "./Mark";
 import type { Achievement, Education, Experience, Profile, Project } from "@/lib/types";
 
+const COVERS = 5;
 type ListKey = "experience" | "education" | "achievements" | "projects";
 
 export default function ProfileView({ talk }: { talk: () => void }) {
@@ -42,6 +44,22 @@ export default function ProfileView({ talk }: { talk: () => void }) {
 
   const roleName = (id: string) => { const e = p.experience.find((x) => x.id === id); return e ? `${e.title || "Role"}, ${e.company}` : ""; };
 
+  const onPhoto = (f: File) => {
+    const img = new Image();
+    const url = URL.createObjectURL(f);
+    img.onload = () => {
+      const size = 320, c = document.createElement("canvas");
+      c.width = c.height = size;
+      const m = Math.min(img.width, img.height);
+      c.getContext("2d")!.drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, size, size);
+      set({ photo: c.toDataURL("image/jpeg", 0.85) });
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  };
+  const startYears = p.experience.map((e) => parseInt(e.start.slice(0, 4), 10)).filter((n) => n > 1960);
+  const years = startYears.length ? Math.max(0, new Date().getFullYear() - Math.min(...startYears)) : null;
+
   return (
     <div className="pf">
       <div className="pf-bar">
@@ -49,23 +67,39 @@ export default function ProfileView({ talk }: { talk: () => void }) {
           <button className={!preview ? "on" : ""} onClick={() => setPreview(false)}>Edit</button>
           <button className={preview ? "on" : ""} onClick={() => { setPreview(true); setEditing(null); }}>Preview</button>
         </div>
-        <div className="row">
-          <button className="btn ghost" onClick={talk}>Talk to Donna</button>
-          <button className="btn ghost" onClick={exportPage}>Export page</button>
-        </div>
+        <span className="eyebrow">{preview ? "How others will see it" : "Click anything to edit"}</span>
       </div>
 
-      <header className="pf-head">
-        <div className="avatar xl">{(p.name || "?").charAt(0).toUpperCase()}</div>
-        <Inline editable={editable} value={p.name} onChange={(v) => set({ name: v })} placeholder="Your name" className="pf-name" />
-        <Inline editable={editable} value={p.headline} onChange={(v) => set({ headline: v })} placeholder="Headline, e.g. Product manager building fintech" className="pf-headline" />
-        <div className="pf-meta">
-          <Inline editable={editable} value={p.location} onChange={(v) => set({ location: v })} placeholder="Location" />
-          <Inline editable={editable} value={p.email} onChange={(v) => set({ email: v })} placeholder="Email" />
-          <Inline editable={editable} value={p.phone} onChange={(v) => set({ phone: v })} placeholder="Phone" />
+      <div className="bezel"><div className="inner">
+        <div className={`pf-cover cv-${p.cover % COVERS}`}>
+          <span className="pf-cover-mark"><Glyph size={64} /></span>
+          {editable && <button className="pf-cover-btn" onClick={() => set({ cover: (p.cover + 1) % COVERS })}>Change cover</button>}
         </div>
-        <Links p={p} set={set} editable={editable} />
-      </header>
+        <div className="pf-ident">
+          <label className={`pf-photo ${editable ? "can" : ""}`}>
+            {p.photo ? <img src={p.photo} alt="" /> : <span>{(p.name || "?").charAt(0).toUpperCase()}</span>}
+            {editable && <><input type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && onPhoto(e.target.files[0])} /><em>Change</em></>}
+          </label>
+          <Inline editable={editable} value={p.name} onChange={(v) => set({ name: v })} placeholder="Your name" className="pf-name" />
+          <Inline editable={editable} value={p.headline} onChange={(v) => set({ headline: v })} placeholder="Headline, e.g. Product manager building fintech" className="pf-headline" />
+          <div className="pf-stats">
+            <div><span className="eyebrow">Roles</span><b>{p.experience.length}</b></div>
+            <div><span className="eyebrow">Years</span><b>{years ?? "-"}</b></div>
+            <div><span className="eyebrow">Results</span><b>{p.achievements.length}</b></div>
+            <div><span className="eyebrow">Skills</span><b>{p.skills.length}</b></div>
+          </div>
+          <div className="row">
+            <button className="btn ghost" onClick={talk}>Talk to Donna</button>
+            <button className="btn ghost" onClick={exportPage}>Export page</button>
+            <button className="btn ghost" disabled title="Public links arrive with accounts">Share link</button>
+          </div>
+          <div className="pf-meta">
+            <Inline editable={editable} value={p.location} onChange={(v) => set({ location: v })} placeholder="Location" />
+            <Inline editable={editable} value={p.email} onChange={(v) => set({ email: v })} placeholder="Email" />
+            <Inline editable={editable} value={p.phone} onChange={(v) => set({ phone: v })} placeholder="Phone" />
+          </div>
+          <Links p={p} set={set} editable={editable} />
+        </div>
 
       <Section label="About" editable={editable}>
         {editable ? <textarea className="pf-about" value={p.about} onChange={(e) => set({ about: e.target.value })} placeholder="Two or three sentences on what you do and what you want next." /> : p.about ? <p className="pf-text">{p.about}</p> : null}
@@ -86,7 +120,7 @@ export default function ProfileView({ talk }: { talk: () => void }) {
           <div className="pf-item" key={e.id}>
             <div className="avatar">{(e.company || "?").charAt(0).toUpperCase()}</div>
             <div className="pf-main">
-              <div className="pf-line"><div><b>{e.title || "Untitled role"}</b> <span className="muted">{e.company}</span></div><span className="muted small">{fmtRange(e.start, e.end, e.current)}</span></div>
+              <div className="pf-line"><div><b>{e.title || "Untitled role"}</b> <span className="muted">{e.company}</span></div><span className="date">{fmtRange(e.start, e.end, e.current)}</span></div>
               {e.location && <div className="muted small">{e.location}</div>}
               {e.description && <p className="pf-text">{e.description}</p>}
               {e.highlights.length > 0 && <ul>{e.highlights.map((h, i) => <li key={i}>{h}</li>)}</ul>}
@@ -145,7 +179,7 @@ export default function ProfileView({ talk }: { talk: () => void }) {
           <div className="pf-item" key={e.id}>
             <div className="avatar">{(e.school || "?").charAt(0).toUpperCase()}</div>
             <div className="pf-main">
-              <div className="pf-line"><div><b>{e.school}</b> <span className="muted">{[e.degree, e.field].filter(Boolean).join(", ")}</span></div><span className="muted small">{fmtRange(e.start, e.end, false)}</span></div>
+              <div className="pf-line"><div><b>{e.school}</b> <span className="muted">{[e.degree, e.field].filter(Boolean).join(", ")}</span></div><span className="date">{fmtRange(e.start, e.end, false)}</span></div>
               {e.notes && <p className="pf-text">{e.notes}</p>}
               {editable && <button className="pf-edit" onClick={() => setEditing(e.id)}>Edit</button>}
             </div>
@@ -156,6 +190,8 @@ export default function ProfileView({ talk }: { talk: () => void }) {
       <Section label="Skills" editable={editable} when={p.skills.length > 0}><Chips items={p.skills} onChange={(skills) => set({ skills })} editable={editable} placeholder="Add a skill and press Enter" /></Section>
       <Section label="Certifications" editable={editable} when={p.certifications.length > 0}><Chips items={p.certifications} onChange={(certifications) => set({ certifications })} editable={editable} placeholder="Add a certification" /></Section>
       <Section label="Languages" editable={editable} when={p.languages.length > 0}><Chips items={p.languages} onChange={(languages) => set({ languages })} editable={editable} placeholder="Add a language" /></Section>
+
+      </div></div>
 
       {editable && (
         <section className="pf-prefs">

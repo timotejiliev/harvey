@@ -31,9 +31,32 @@ const clips = () =>
     .then((j) => (Array.isArray(j) ? j.filter((x) => typeof x === "string") : []))
     .catch(() => []));
 
+// One shared element, unlocked by a click, so audio that starts after a network
+// round trip is still allowed to play (Safari and iOS are strict about this).
+let shared: HTMLAudioElement | null = null;
+const SILENCE = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
+
+/** Call from a click handler before any speaking. Unlocks audio and speech for the page. */
+export function primeVoice() {
+  try {
+    shared ??= new Audio();
+    shared.src = SILENCE;
+    void shared.play().catch(() => {});
+  } catch { /* ignore */ }
+  try {
+    if (typeof speechSynthesis !== "undefined") {
+      const u = new SpeechSynthesisUtterance(" ");
+      u.volume = 0;
+      speechSynthesis.speak(u);
+    }
+  } catch { /* ignore */ }
+}
+
 function playUrl(url: string, onStart?: () => void): Promise<void> {
   return new Promise((resolve, reject) => {
-    const a = new Audio(url);
+    const a = (shared ??= new Audio());
+    a.onplaying = a.onended = a.onerror = null;
+    a.src = url;
     stopCurrent = () => { a.pause(); resolve(); };
     a.onplaying = () => onStart?.();
     a.onended = () => resolve();
@@ -60,33 +83,45 @@ export async function listBrowserVoices(): Promise<SpeechSynthesisVoice[]> {
   return (await loadVoices()).filter((v) => v.lang.toLowerCase().startsWith("en"));
 }
 
-async function speakBrowser(text: string, pref: string, onStart?: () => void) {
-  if (typeof speechSynthesis === "undefined") throw new Error("This browser has no speech support.");
+const live: SpeechSynthesisUtterance[] = []; // Chrome drops utterances that get garbage-collected mid-speech
+
+async function speakBrowser(text: string, pref: string, onStart?: () => void, onWarn?: (m: string) => void) {
+  if (typeof speechSynthesis === "undefined") throw new Error("This browser has no built-in speech.");
   const voices = await loadVoices();
+  if (voices.length === 0) onWarn?.("This browser has no built-in voices installed. Choose the premium voice in Settings.");
   const en = voices.filter((v) => v.lang.toLowerCase().startsWith("en"));
-  const voice = voices.find((v) => v.voiceURI === pref) ?? en.find((v) => PREFERRED.test(v.name)) ?? en[0];
-  // Chrome cuts long utterances; speak sentence by sentence.
+  // Prefer voices stored on the device: network voices can fail without any error.
+  const local = en.filter((v) => v.localService);
+  const voice = voices.find((v) => v.voiceURI === pref) ?? local.find((v) => PREFERRED.test(v.name)) ?? en.find((v) => PREFERRED.test(v.name)) ?? local[0] ?? en[0];
   const parts = text.match(/[^.!?]+[.!?]*\s*/g) ?? [text];
   speechSynthesis.cancel();
+  await new Promise((r) => setTimeout(r, 80)); // speak() straight after cancel() is dropped by Chrome
+  speechSynthesis.resume();
   let cancelled = false;
   stopCurrent = () => { cancelled = true; speechSynthesis.cancel(); };
   let started = false;
-  for (const part of parts) {
-    if (cancelled) return;
-    await new Promise<void>((resolve) => {
-      // Some engines never fire end/error; never let that stall the caller.
-      const guard = setTimeout(resolve, Math.max(3000, part.length * 110));
-      const done = () => { clearTimeout(guard); resolve(); };
-      const u = new SpeechSynthesisUtterance(part);
-      if (voice) { u.voice = voice; u.lang = voice.lang; }
-      u.rate = 0.96;
-      u.pitch = 0.95;
-      u.onstart = () => { if (!started) { started = true; onStart?.(); } };
-      u.onend = done;
-      u.onerror = done;
-      speechSynthesis.speak(u);
-    });
-  }
+  const silent = setTimeout(() => {
+    if (!started && !cancelled) onWarn?.("I can't make a sound with this browser's built-in voice. Check your volume, or choose the premium voice in Settings.");
+  }, 3000);
+  try {
+    for (const part of parts) {
+      if (cancelled) return;
+      await new Promise<void>((resolve) => {
+        const guard = setTimeout(resolve, Math.max(4000, part.length * 120)); // some engines never fire end
+        const u = new SpeechSynthesisUtterance(part);
+        live.push(u);
+        const done = () => { clearTimeout(guard); live.splice(live.indexOf(u), 1); resolve(); };
+        if (voice) { u.voice = voice; u.lang = voice.lang; }
+        u.rate = 0.96;
+        u.pitch = 0.95;
+        u.volume = 1;
+        u.onstart = () => { if (!started) { started = true; clearTimeout(silent); onStart?.(); } };
+        u.onend = done;
+        u.onerror = done;
+        speechSynthesis.speak(u);
+      });
+    }
+  } finally { clearTimeout(silent); }
 }
 
 /* ---------- remote voices ---------- */
@@ -128,11 +163,11 @@ export async function speak(settings: Settings, text: string, opts: SpeakOpts = 
       });
       return await fromBlob(res, opts.onStart);
     }
-    await speakBrowser(text, v.browserVoice, opts.onStart);
+    await speakBrowser(text, v.browserVoice, opts.onStart, opts.onWarn);
   } catch (e) {
     opts.onWarn?.(e instanceof Error ? e.message : "Voice failed");
     if (v.mode !== "browser") {
-      try { await speakBrowser(text, v.browserVoice, opts.onStart); } catch { /* silent */ }
+      try { await speakBrowser(text, v.browserVoice, opts.onStart, opts.onWarn); } catch { /* silent */ }
     }
   }
 }
