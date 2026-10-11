@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { STATUSES, type Job } from "@/lib/types";
+import { greeting, pipelineLine } from "@/lib/donna";
 import { Score } from "./ui";
 
 export default function Pipeline({ open, goAdd }: { open: (id: string) => void; goAdd: () => void }) {
@@ -20,8 +21,8 @@ export default function Pipeline({ open, goAdd }: { open: (id: string) => void; 
     <>
       <div className="page-head">
         <div>
-          <h1>Your pipeline</h1>
-          <p className="sub">Everything you are chasing, in one place.</p>
+          <h1>{greeting(data.profile.name)}</h1>
+          <p className="sub donna-line">{pipelineLine({ jobs: jobs.length, due: due.length, ready: jobs.filter((j) => j.status === "Ready to apply").length })}</p>
         </div>
         <div className="row">
           <button className="btn ghost" onClick={() => setView(view === "board" ? "table" : "board")}>{view === "board" ? "Table view" : "Board view"}</button>
@@ -44,7 +45,7 @@ export default function Pipeline({ open, goAdd }: { open: (id: string) => void; 
       {jobs.length === 0 ? (
         <div className="card empty">
           <b>No jobs yet</b>
-          Paste a link or the text of a posting and Harvey will score it against your CV.
+          Paste a link or the text of a posting and Donna will score it against your CV.
           <div style={{ marginTop: 22 }}><button className="btn" onClick={goAdd}>Add your first job</button></div>
         </div>
       ) : view === "board" ? (

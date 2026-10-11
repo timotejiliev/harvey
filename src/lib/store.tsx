@@ -1,9 +1,11 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { defaultData } from "./defaults";
+import { defaultData, defaultVoice } from "./defaults";
+import { migrateProfile } from "./profile";
 import type { AppData } from "./types";
 
-const KEY = "harvey:data:v1";
+const KEY = "donna:data:v1";
+const OLD_KEY = "harvey:data:v1"; // pre-rename data is picked up automatically
 
 /**
  * Persistence is isolated here. v1 stores in the browser (zero setup).
@@ -11,10 +13,14 @@ const KEY = "harvey:data:v1";
  */
 function load(): AppData {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(KEY) ?? localStorage.getItem(OLD_KEY);
     if (!raw) return defaultData;
     const d = JSON.parse(raw) as AppData;
-    return { ...defaultData, ...d, settings: { ...defaultData.settings, ...d.settings }, profile: { ...defaultData.profile, ...d.profile } };
+    return {
+      ...defaultData, ...d,
+      settings: { ...defaultData.settings, ...d.settings, voice: { ...defaultVoice, ...d.settings?.voice } },
+      profile: migrateProfile(d.profile),
+    };
   } catch {
     return defaultData;
   }
@@ -50,4 +56,4 @@ export function useStore(): Ctx {
   return c;
 }
 
-export const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+export { uid } from "./id";

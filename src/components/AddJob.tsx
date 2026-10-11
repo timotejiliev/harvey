@@ -48,7 +48,7 @@ export default function AddJob({ done, prefill }: { done: (id?: string) => void;
   return (
     <>
       <h1>Add jobs</h1>
-      <p className="sub">Only methods that do not risk your accounts. Harvey never scrapes LinkedIn or Indeed; paste or use the bookmarklet for those.</p>
+      <p className="sub">Only methods that do not risk your accounts. Donna never scrapes LinkedIn or Indeed; paste or use the bookmarklet for those.</p>
       <div className="tabs">{MODES.map(([m, l]) => <button key={m} className={mode === m ? "on" : ""} onClick={() => { setMode(m); setError(""); }}>{l}</button>)}</div>
       {error && <div className="err">{error}</div>}
       {mode === "url" && (
@@ -83,7 +83,7 @@ function EmailImport({ settings, busy, run, onJobs }: { settings: Settings; busy
     });
   return (
     <div className="card">
-      <p className="muted small">Paste the body of a job-alert email (LinkedIn, Indeed, Otta, etc.). Harvey lists the roles; the full text is fetched when you evaluate each one, or paste it yourself.</p>
+      <p className="muted small">Paste the body of a job-alert email (LinkedIn, Indeed, Otta, etc.). Donna lists the roles; the full text is fetched when you evaluate each one, or paste it yourself.</p>
       <Field label="Email text"><textarea style={{ minHeight: 220 }} value={raw} onChange={(e) => setRaw(e.target.value)} /></Field>
       <div style={{ marginTop: 12 }}><button className="btn" disabled={raw.length < 40 || busy} onClick={go}>{busy ? "Reading..." : "Extract jobs"}</button></div>
     </div>
@@ -136,11 +136,11 @@ function Feeds({ onAdd }: { onAdd: (j: Partial<Job>[]) => void }) {
 function Bookmarklet() {
   const [origin, setOrigin] = useState("");
   useEffect(() => setOrigin(location.origin), []);
-  const code = `javascript:(function(){var A='${origin}';var w=window.open(A+'/?bm=1');function h(e){if(e.origin===A&&e.data==='harvey-ready'){w.postMessage({harvey:1,url:location.href,title:document.title,text:(String(getSelection())||document.body.innerText).slice(0,40000)},A);removeEventListener('message',h)}}addEventListener('message',h)})()`;
+  const code = `javascript:(function(){var A='${origin}';var w=window.open(A+'/?bm=1');function h(e){if(e.origin===A&&e.data==='donna-ready'){w.postMessage({donna:1,url:location.href,title:document.title,text:(String(getSelection())||document.body.innerText).slice(0,40000)},A);removeEventListener('message',h)}}addEventListener('message',h)})()`;
   return (
     <div className="card">
-      <p>Drag this button to your bookmarks bar. On any job page, click it to send the posting (or your selected text) to Harvey for review.</p>
-      <p><a className="btn" href={code} onClick={(e) => e.preventDefault()} draggable>Send to Harvey</a></p>
+      <p>Drag this button to your bookmarks bar. On any job page, click it to send the posting (or your selected text) to Donna for review.</p>
+      <p><a className="btn" href={code} onClick={(e) => e.preventDefault()} draggable>Send to Donna</a></p>
       <p className="muted small">It runs in your own browser on a page you are already viewing, so it doesn&apos;t scrape or automate any site. Some sites with strict security policies may block it; select the text and paste instead.</p>
     </div>
   );

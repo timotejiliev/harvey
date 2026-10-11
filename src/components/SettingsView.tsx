@@ -6,6 +6,9 @@ import { TEMPLATES } from "@/lib/templates";
 import { ask } from "@/lib/client-ai";
 import type { AppData, ExportFormat, Provider, TemplateId } from "@/lib/types";
 import { Field, useAction } from "./ui";
+import { listBrowserVoices, speak } from "@/lib/voice";
+import type { VoiceSettings } from "@/lib/types";
+import { useEffect } from "react";
 
 export default function SettingsView() {
   const { data, update, replace } = useStore();
@@ -14,6 +17,12 @@ export default function SettingsView() {
   const [okMsg, setOk] = useState("");
   const file = useRef<HTMLInputElement>(null);
   const set = (patch: Partial<typeof s>) => update((d) => ({ ...d, settings: { ...d.settings, ...patch } }));
+
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  useEffect(() => { listBrowserVoices().then(setVoices); }, []);
+  const v = s.voice;
+  const setVoice = (patch: Partial<VoiceSettings>) => set({ voice: { ...s.voice, ...patch } });
+  const hello = () => run("voice", async () => { setOk(""); await speak(s, "Hello. I'm Donna. This is how I sound.", { onWarn: (m) => { throw new Error(m); } }); });
 
   const test = () =>
     run("test", async () => {
@@ -26,7 +35,7 @@ export default function SettingsView() {
     const safe: AppData = { ...data, settings: { ...data.settings, apiKey: "" } };
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([JSON.stringify(safe, null, 2)], { type: "application/json" }));
-    a.download = "harvey-backup.json";
+    a.download = "donna-backup.json";
     a.click();
   };
   const restore = async (f: File) => {
@@ -71,6 +80,49 @@ export default function SettingsView() {
           {okMsg && <span className="ok">{okMsg}</span>}
         </div>
         {error && <div className="err">{error}</div>}
+      </div>
+
+      <h2>Donna&apos;s voice</h2>
+      <div className="card">
+        <div className="grid2">
+          <Field label="Voice">
+            <select value={v.mode} onChange={(e) => setVoice({ mode: e.target.value as VoiceSettings["mode"] })}>
+              <option value="browser">Built in (free, varies by device)</option>
+              <option value="openai">Premium (OpenAI voice, uses your key)</option>
+              <option value="custom">Custom (your own voice server)</option>
+              <option value="off">Off (text only)</option>
+            </select>
+          </Field>
+          {v.mode === "browser" && (
+            <Field label="Built-in voice">
+              <select value={v.browserVoice} onChange={(e) => setVoice({ browserVoice: e.target.value })}>
+                <option value="">Automatic (best match)</option>
+                {voices.map((x) => <option key={x.voiceURI} value={x.voiceURI}>{x.name} ({x.lang})</option>)}
+              </select>
+            </Field>
+          )}
+          {v.mode === "openai" && (
+            <Field label="OpenAI voice">
+              <select value={v.openaiVoice} onChange={(e) => setVoice({ openaiVoice: e.target.value })}>
+                {["coral", "sage", "shimmer", "nova", "alloy", "ash", "ballad", "echo", "fable", "onyx", "verse"].map((x) => <option key={x}>{x}</option>)}
+              </select>
+            </Field>
+          )}
+        </div>
+        {v.mode === "openai" && <Field label={s.provider === "openai" ? "OpenAI key for voice (blank uses your main key)" : "OpenAI key for voice"}><input type="password" autoComplete="off" value={v.openaiKey} onChange={(e) => setVoice({ openaiKey: e.target.value })} placeholder="sk-..." /></Field>}
+        {v.mode === "custom" && (
+          <>
+            <Field label="Voice server URL (OpenAI-compatible, must allow this site via CORS)"><input value={v.customUrl} onChange={(e) => setVoice({ customUrl: e.target.value })} placeholder="http://localhost:8000" /></Field>
+            <div className="grid2">
+              <Field label="Model"><input value={v.customModel} onChange={(e) => setVoice({ customModel: e.target.value })} /></Field>
+              <Field label="Voice name"><input value={v.customVoice} onChange={(e) => setVoice({ customVoice: e.target.value })} /></Field>
+            </div>
+          </>
+        )}
+        <div className="row" style={{ marginTop: 14 }}>
+          <button className="btn" onClick={hello} disabled={v.mode === "off" || !!busy}>Hear Donna</button>
+        </div>
+        <p className="muted small">Want a signature voice for free? Design one in a local tool such as VoiceStudio or voicebox, export the lines listed in docs/VOICE.md as mp3 files, and put them in public/voice. Donna plays those first and needs no server.</p>
       </div>
 
       <h2>Documents</h2>

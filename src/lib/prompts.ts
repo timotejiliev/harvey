@@ -1,3 +1,4 @@
+import { profileToMarkdown } from "./profile";
 import type { Job, Profile } from "./types";
 
 export const FAITHFULNESS = `Hard rules:
@@ -13,7 +14,7 @@ Target roles: ${p.targetRoles}
 Deal-breakers:\n${p.dealBreakers || "(none)"}
 Extra notes / proof points:\n${p.notes || "(none)"}
 
-MASTER CV (source of truth):\n${p.masterCv}`;
+MASTER CV (source of truth):\n${profileToMarkdown(p)}`;
 
 const jobBlock = (j: Job) =>
   `JOB
@@ -68,4 +69,23 @@ export const outreachPrompt = (p: Profile, j: Job, kind: string) => ({
 export const answerPrompt = (p: Profile, j: Job | null, question: string, saved: string) => ({
   system: `You answer job application form questions truthfully from the candidate's materials. ${FAITHFULNESS} If the answer is not in the materials, say what information is needed instead of guessing.`,
   prompt: `${profileBlock(p)}\n\nSaved answers:\n${saved || "(none)"}\n\n${j ? jobBlock(j) : ""}\n\nQuestion: ${question}\n\nGive a concise answer ready to paste.`,
+});
+
+export const parseCvPrompt = (text: string) => ({
+  system: "You convert resumes and profile text into structured data. Extract only what is present. Never invent. Reply with JSON only.",
+  prompt: `Convert the following material (a CV, LinkedIn export, and/or personal website text) into structured JSON:
+{
+ "name": string, "headline": string (a short professional headline; derive from the latest title if absent), "email": string, "phone": string, "location": string,
+ "about": string (summary paragraph, from the text if present),
+ "links": [{"label": string, "url": string}],
+ "experience": [{"company": string, "title": string, "location": string, "start": "YYYY-MM" or "YYYY", "end": "YYYY-MM" or "YYYY" or "", "current": boolean, "description": string (one sentence of scope, only if the text gives it), "highlights": [string] (bullets, lightly cleaned, keep numbers exactly)}],
+ "education": [{"school": string, "degree": string, "field": string, "start": string, "end": string, "notes": string}],
+ "achievements": [{"title": string, "metric": string (e.g. "+38%", "$1.2M", "team of 12"), "detail": string, "year": string}] (the 3-8 most impressive quantified or standout results found in the text, each a short title),
+ "projects": [{"name": string, "url": string, "description": string}],
+ "skills": [string], "languages": [string], "certifications": [string]
+}
+Use "" or [] for anything missing. Newest experience first.
+
+MATERIAL:
+${text.slice(0, 60000)}`,
 });

@@ -5,7 +5,7 @@ import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Harvey: AI job search copilot",
+  title: "Donna: AI job search copilot",
   description: "Find, score, tailor and track job applications. You review and submit everything.",
 };
 

@@ -1,6 +1,11 @@
-# Harvey
+# Donna
 
-An AI-assisted job search copilot, from finding roles to landing the offer. Harvey drafts and recommends; **you review and submit everything**. It never auto-applies, never sends email, and never scrapes sites that forbid it.
+An AI-assisted job search copilot, from finding roles to landing the offer. Donna drafts and recommends; **you review and submit everything**. It never auto-applies, never sends email, and never scrapes sites that forbid it.
+
+## Meet Donna
+
+- **Voice-led onboarding.** Donna greets you, asks your name, connects your AI key, then reads your CV (PDF, DOCX or text), a LinkedIn PDF export and your website, and builds your profile. Voice is free (browser), premium (OpenAI) or custom (pre-rendered clips or your own server). See `docs/VOICE.md`.
+- **A real profile, not a text blob.** Roles, achievements, projects, education and skills are separate components you edit in place, laid out like read.cv. Preview it, or export it as a standalone HTML page. A shareable public link is planned (the `handle` field is reserved).
 
 ## What it does
 
@@ -45,6 +50,8 @@ Data is stored in your browser's localStorage (back it up from Settings). Your A
 - Faithfulness rules in every prompt: reformulate, never invent.
 
 ## Roadmap
+
+0. Public shareable profile at a handle (needs accounts)
 
 1. Supabase auth + sync (schema ready)
 2. Hosted "full service" AI tier and billing

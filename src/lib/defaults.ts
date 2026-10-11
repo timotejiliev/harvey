@@ -1,4 +1,38 @@
-import type { AppData } from "./types";
+import type { AppData, Profile, VoiceSettings } from "./types";
+
+export const defaultVoice: VoiceSettings = {
+  mode: "browser",
+  browserVoice: "",
+  openaiKey: "",
+  openaiVoice: "coral",
+  customUrl: "",
+  customModel: "tts-1",
+  customVoice: "donna",
+};
+
+export const emptyProfile: Profile = {
+  name: "",
+  headline: "",
+  email: "",
+  phone: "",
+  location: "",
+  links: [],
+  about: "",
+  experience: [],
+  education: [],
+  achievements: [],
+  projects: [],
+  skills: [],
+  languages: [],
+  certifications: [],
+  targetRoles: "",
+  dealBreakers: "",
+  minScore: 4,
+  notes: "",
+  masterCv: "",
+  handle: "",
+  onboarded: false,
+};
 
 export const defaultData: AppData = {
   version: 1,
@@ -9,19 +43,9 @@ export const defaultData: AppData = {
     baseUrl: "",
     defaultFormat: "pdf",
     defaultTemplate: "classic",
+    voice: defaultVoice,
   },
-  profile: {
-    name: "",
-    email: "",
-    phone: "",
-    location: "",
-    links: "",
-    masterCv: "",
-    targetRoles: "",
-    dealBreakers: "",
-    minScore: 4,
-    notes: "",
-  },
+  profile: emptyProfile,
   jobs: [],
   stories: [],
   answers: [],

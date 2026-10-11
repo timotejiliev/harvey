@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { ask, askJson } from "@/lib/client-ai";
 import { answerPrompt, draftPrompt, evaluatePrompt, extractPrompt, outreachPrompt, prepPrompt, reviewPrompt } from "@/lib/prompts";
+import { hasProfileData } from "@/lib/profile";
 import { exportDoc } from "@/lib/export";
 import { TEMPLATES } from "@/lib/templates";
 import { STATUSES, type Documents, type Evaluation, type ExportFormat, type Job, type Status, type TemplateId } from "@/lib/types";
@@ -19,7 +20,7 @@ export default function JobDetail({ id, back }: { id: string; back: () => void }
 
   const { settings, profile } = data;
   const patch = (p: Partial<Job>) => update((d) => ({ ...d, jobs: d.jobs.map((j) => (j.id === id ? { ...j, ...p } : j)) }));
-  const needProfile = !profile.masterCv.trim();
+  const needProfile = !hasProfileData(profile);
 
   /** Make sure the description exists; fetch from URL when only a link was imported. */
   async function ensureDescription(): Promise<Job> {
@@ -88,7 +89,7 @@ export default function JobDetail({ id, back }: { id: string; back: () => void }
           <select value={job.status} onChange={(e) => setStatus(e.target.value as Status)} style={{ width: 180, borderRadius: 999 }}>{STATUSES.map((s) => <option key={s}>{s}</option>)}</select>
         </div>
       </div>
-      {needProfile && <div className="banner">Add your master CV in <b>Profile</b> first. Everything is built from it.</div>}
+      {needProfile && <div className="banner">Build your <b>Profile</b> first. Everything Donna writes comes from it.</div>}
       {!settings.apiKey && settings.provider !== "openai-compatible" && <div className="banner">Add your AI key in <b>Settings</b> to use AI features.</div>}
       {error && <div className="err">{error}</div>}
       <div className="tabs">{tabs.map(([t, l]) => <button key={t} className={tab === t ? "on" : ""} onClick={() => setTab(t)}>{l}</button>)}</div>
@@ -204,7 +205,7 @@ function ApplyAssist({ job }: { job: Job }) {
   return (
     <>
       <div className="card">
-        <p><b>You submit every application yourself.</b> Harvey prepares everything so applying takes a minute.</p>
+        <p><b>You submit every application yourself.</b> Donna prepares everything so applying takes a minute.</p>
         <ol>
           <li>Export your CV and cover letter from the Documents tab.</li>
           <li>Open the posting{job.url ? <> (<a href={job.url} target="_blank" rel="noreferrer">link</a>)</> : ""} and answer form questions below.</li>
@@ -245,7 +246,7 @@ function Outreach({ job, patch, needProfile }: { job: Job; patch: (p: Partial<Jo
           })}>{busy === "o" + i ? "Drafting..." : OUTREACH_LABELS[i]}</button>
         ))}
       </div>
-      <p className="muted small">Drafts only. Harvey never sends anything.</p>
+      <p className="muted small">Drafts only. Donna never sends anything.</p>
       {error && <div className="err">{error}</div>}
       {job.outreach && <div className="card"><Md text={job.outreach} /></div>}
     </>

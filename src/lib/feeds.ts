@@ -13,7 +13,7 @@ export type FeedKind = "greenhouse" | "lever" | "ashby" | "remoteok";
 /** Only official public job-board APIs; no scraping of sites that forbid it. */
 export async function fetchFeed(kind: FeedKind, slug: string): Promise<FeedJob[]> {
   const get = async (url: string) => {
-    const r = await fetch(url, { signal: AbortSignal.timeout(15000), headers: { "user-agent": "HarveyJobTracker/0.1" } });
+    const r = await fetch(url, { signal: AbortSignal.timeout(15000), headers: { "user-agent": "DonnaJobTracker/0.1" } });
     if (!r.ok) throw new Error(`Feed returned ${r.status} (check the company slug)`);
     return r.json();
   };

@@ -10,17 +10,17 @@ export async function POST(req: Request) {
     const u = await assertPublicUrl(url);
     if (isBlockedSite(u.hostname.toLowerCase())) {
       return NextResponse.json(
-        { error: "This site forbids automated access. Open the posting and paste its text instead (or use the bookmarklet)." },
+        { error: "This site forbids automated access, and Donna will not risk your account. Save the page as a PDF or paste its text instead." },
         { status: 422 },
       );
     }
     const res = await fetch(u, {
       redirect: "manual",
-      headers: { "user-agent": "Mozilla/5.0 (compatible; HarveyJobTracker/0.1)" },
+      headers: { "user-agent": "Mozilla/5.0 (compatible; DonnaJobTracker/0.1)" },
       signal: AbortSignal.timeout(15000),
     });
     if (res.status >= 300 && res.status < 400) {
-      return NextResponse.json({ error: "Page redirected. Paste the final URL or the posting text." }, { status: 422 });
+      return NextResponse.json({ error: "Page redirected. Paste the final URL or the text." }, { status: 422 });
     }
     if (!res.ok) return NextResponse.json({ error: `Site returned ${res.status}. Paste the text instead.` }, { status: 422 });
     const html = (await res.text()).slice(0, 2_000_000);

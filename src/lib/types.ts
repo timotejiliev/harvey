@@ -14,6 +14,18 @@ export const STATUSES = [
 ] as const;
 export type Status = (typeof STATUSES)[number];
 
+export type VoiceMode = "off" | "browser" | "openai" | "custom";
+
+export interface VoiceSettings {
+  mode: VoiceMode;
+  browserVoice: string; // voiceURI, "" = auto-pick
+  openaiKey: string; // falls back to the main key when the provider is OpenAI
+  openaiVoice: string;
+  customUrl: string; // OpenAI-compatible server, e.g. a local VoiceStudio / voicebox
+  customModel: string;
+  customVoice: string;
+}
+
 export interface Settings {
   provider: Provider;
   apiKey: string;
@@ -21,19 +33,76 @@ export interface Settings {
   baseUrl: string; // only for openai-compatible
   defaultFormat: ExportFormat;
   defaultTemplate: TemplateId;
+  voice: VoiceSettings;
+}
+
+export interface Link {
+  label: string;
+  url: string;
+}
+
+export interface Experience {
+  id: string;
+  company: string;
+  title: string;
+  location: string;
+  start: string; // "2021-03" or "2021"
+  end: string; // "" when current
+  current: boolean;
+  description: string;
+  highlights: string[];
+}
+
+export interface Education {
+  id: string;
+  school: string;
+  degree: string;
+  field: string;
+  start: string;
+  end: string;
+  notes: string;
+}
+
+export interface Achievement {
+  id: string;
+  title: string;
+  metric: string; // "+38%", "$1.2M", "12 people"
+  detail: string;
+  year: string;
+  experienceId: string; // optional link to a role
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  url: string;
+  description: string;
 }
 
 export interface Profile {
   name: string;
+  headline: string;
   email: string;
   phone: string;
   location: string;
-  links: string; // free text, one per line
-  masterCv: string; // markdown, source of truth
+  links: Link[];
+  about: string;
+  experience: Experience[];
+  education: Education[];
+  achievements: Achievement[];
+  projects: Project[];
+  skills: string[];
+  languages: string[];
+  certifications: string[];
+  // job search preferences (private, never on the public page)
   targetRoles: string;
   dealBreakers: string; // one per line
   minScore: number; // advise against applying below this (1-5)
-  notes: string; // extra proof points, preferences, constraints
+  notes: string;
+  // raw text imported during onboarding, kept so nothing is lost
+  masterCv: string;
+  handle: string; // reserved for the shareable page
+  onboarded: boolean;
 }
 
 export interface DimensionScore {

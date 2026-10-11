@@ -1,5 +1,5 @@
 {
-  "name": "harvey",
+  "name": "donna",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,9 +12,11 @@
   "dependencies": {
     "docx": "^9.0.2",
     "geist": "^1.7.2",
+    "mammoth": "^1.13.0",
     "next": "^15.1.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "unpdf": "^1.8.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
